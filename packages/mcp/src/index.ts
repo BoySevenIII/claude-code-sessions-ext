@@ -9,6 +9,7 @@ import { Cause, Effect } from 'effect'
 import { z } from 'zod'
 import * as session from '@claude-sessions/core'
 import { startWebServer, stopWebServer, type WebServer } from './server.js'
+import { registerLiveTools } from './live-tools.js'
 
 // Helper to run Effect with detailed error reporting
 async function runEffect<A>(effect: Effect.Effect<A, unknown, never>): Promise<A> {
@@ -417,6 +418,8 @@ server.tool('stop_gui', 'Stop the web GUI server', {}, async () => {
     ],
   }
 })
+
+registerLiveTools(server)
 
 // Main entry
 async function main() {
