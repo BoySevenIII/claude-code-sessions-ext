@@ -7,6 +7,10 @@ Browse, search, rename, split, and clean up [Claude Code](https://claude.ai/code
 
 > **Note**: This is a community project and is not affiliated with or endorsed by Anthropic.
 
+## Live Claude Code bridge
+
+This fork adds opt-in tools for sending a message to a running Claude Code tmux pane and reading new conversation messages by Claude Session ID. See the [English explanation and deployment guide](docs/live-claude-bridge.md). The existing session management tools remain available.
+
 ## Packages
 
 | Package                                      | Version                                                                                                                                                                                                                                                                                                  | Description      |
