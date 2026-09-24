@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Unofficial](https://img.shields.io/badge/unofficial-community%20project-orange)
 
-Browse, search, rename, split, and clean up [Claude Code](https://claude.ai/code) sessions — via MCP server, Web UI, or VSCode extension.
+Browse, search, rename, split, and clean up [Claude Code](https://claude.ai/code) sessions via the MCP server, Web UI, or VSCode extension. This fork also lets an MCP client send messages to a running Claude Code session in tmux and follow new replies by Claude Session ID.
 
 > **Note**: This is a community project and is not affiliated with or endorsed by Anthropic.
 
