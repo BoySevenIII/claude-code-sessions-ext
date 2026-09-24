@@ -48,10 +48,11 @@ Build the fork with the repository's `pnpm` workflow:
 git clone https://github.com/BoySevenIII/claude-code-sessions-ext.git ~/claude-code-sessions-ext
 cd ~/claude-code-sessions-ext
 git switch feat/live-claude-tmux
-corepack enable
-pnpm install --frozen-lockfile
-pnpm build:core
-pnpm build:mcp
+corepack pnpm install --frozen-lockfile
+corepack pnpm build:core
+corepack pnpm build:mcp
+corepack pnpm test:mcp
+corepack pnpm --filter claude-sessions-mcp typecheck
 ```
 
 Set the allowlists in the existing `openai-tunnel-claude.service` user unit
@@ -102,7 +103,7 @@ returns at most 50 messages; later reads begin at the supplied byte cursor.
 When Claude switches conversations or `/clear` creates a new ID, update the
 Claude Session ID allowlist.
 
-Run focused tests with `node --experimental-strip-types --test
-packages/mcp/src/live-session.test.mjs`, then run the repository's `pnpm
-test:mcp`, `pnpm --filter claude-sessions-mcp typecheck`, and `pnpm build:mcp`
+On Node 24, the focused tests can also run without installing the workspace:
+`node --experimental-strip-types --test packages/mcp/src/live-session.test.mjs`.
+On the Claude VM's Node 20 runtime, use the repository's `corepack pnpm test:mcp`
 after installing dependencies.
