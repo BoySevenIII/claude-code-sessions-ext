@@ -7,6 +7,23 @@ Browse, search, rename, split, and clean up [Claude Code](https://claude.ai/code
 
 > **Note**: This is a community project and is not affiliated with or endorsed by Anthropic.
 
+## Purpose of this fork
+
+> [!IMPORTANT]
+> **Enable live collaboration with a running Claude Code session.** An external MCP client can send a message into that session and read its new replies while Claude continues working with its existing conversation context.
+
+The preferred path takes only the running Claude session UUID. The bridge discovers its process through `claude agents --json`, finds the terminal used by Claude Code, sends input, and reads replies from the session transcript. The caller does not provide a tmux pane, external tmux session name, or Claude startup flag. Existing session-management tools still work through the same MCP server and OpenAI Tunnel.
+
+## Talk to a running Claude session
+
+| Tool | What it does |
+| --- | --- |
+| `list_active_claude_sessions` | Find interactive session UUIDs, process IDs, and current status. |
+| `send_to_claude_session` | Deliver one line to an idle session by UUID. Confirms delivery, not completion. |
+| `read_live_conversation` | Read transcript turns by UUID and project, then poll from a byte cursor. |
+
+Call `list_active_claude_sessions`, select the current UUID, send a message with `send_to_claude_session`, and poll `read_live_conversation` for Claude's reply. The older `list_live_panes` and `send_to_live_session` tools remain available for explicit pane targeting. Read the [UUID routing and deployment guide](docs/session-id-routing.md) for the mechanism, safeguards, installation, and verification.
+
 ## Packages
 
 | Package                                      | Version                                                                                                                                                                                                                                                                                                  | Description      |
