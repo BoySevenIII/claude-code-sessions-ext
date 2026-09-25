@@ -3,13 +3,20 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Unofficial](https://img.shields.io/badge/unofficial-community%20project-orange)
 
-Browse, search, rename, split, and clean up [Claude Code](https://claude.ai/code) sessions via the MCP server, Web UI, or VSCode extension. This fork also lets an MCP client send messages to a running Claude Code session in tmux and follow new replies by Claude Session ID.
+Browse, search, rename, split, and clean up [Claude Code](https://claude.ai/code) sessions — via MCP server, Web UI, or VSCode extension.
 
 > **Note**: This is a community project and is not affiliated with or endorsed by Anthropic.
 
+## Purpose of this fork
+
+> [!IMPORTANT]
+> **Enable live collaboration with a running Claude Code session.** An external MCP client can send a message into that session and read its new replies while Claude continues working with its existing conversation context.
+
+The extension sends input to an explicitly allowed tmux pane and reads conversation messages from the corresponding Claude transcript using its Session ID. It adds these opt-in capabilities to the existing `claude-sessions-mcp` server, so the original session-management tools and the current OpenAI Tunnel remain usable together.
+
 ## Live Claude Code bridge
 
-This fork adds opt-in tools for sending a message to a running Claude Code tmux pane and reading new conversation messages by Claude Session ID. See the [English explanation and deployment guide](docs/live-claude-bridge.md). The existing session management tools remain available.
+The new MCP tools locate the pane, deliver a message, and read subsequent replies with a cursor. See the [English explanation and deployment guide](docs/live-claude-bridge.md) for setup, examples, and access limits.
 
 ## Packages
 
