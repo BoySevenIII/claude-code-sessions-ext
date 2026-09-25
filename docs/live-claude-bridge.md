@@ -21,7 +21,7 @@ the same OpenAI Tunnel. There is no second tunnel or connector to maintain.
 
 There are two different identifiers. `masterplan2-109` is a **tmux session
 name**: it identifies the terminal that receives input. A UUID such as
-`6c4cce7f-5ea9-436d-99aa-744a8535df73` is a **Claude Session ID**: it
+`<current-claude-session-id>` is a **Claude Session ID** (a UUID from `/status`): it
 identifies the conversation transcript. They are configured separately.
 
 ## Intended workflow
@@ -51,7 +51,7 @@ shown by `/status` in the target interactive session:
 git clone https://github.com/BoySevenIII/claude-code-sessions-ext.git ~/claude-code-sessions-ext
 cd ~/claude-code-sessions-ext
 git switch feat/live-claude-tmux
-bash scripts/install-live-bridge.sh 6c4cce7f-5ea9-436d-99aa-744a8535df73 masterplan2-109
+bash scripts/install-live-bridge.sh '<current-claude-session-id>' masterplan2-109
 ```
 
 The target process must run as the same Unix user as the tunnel client. The
@@ -59,7 +59,7 @@ installer creates a user-unit drop-in with the two allowlists:
 
 ```ini
 Environment=TMUX_MCP_ALLOWED_SESSIONS=masterplan2-109
-Environment=TMUX_MCP_ALLOWED_CLAUDE_SESSIONS=6c4cce7f-5ea9-436d-99aa-744a8535df73
+Environment=TMUX_MCP_ALLOWED_CLAUDE_SESSIONS=<current-claude-session-id>
 ```
 
 It changes only the stdio MCP command in the existing `CloudB-DEV-root` profile:
