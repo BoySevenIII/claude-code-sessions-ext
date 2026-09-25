@@ -79,3 +79,37 @@ esac
     await rm(dir, { recursive: true, force: true })
   }
 })
+
+test('without allowlists, another active Claude pane and transcript can be selected per call', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'live-dynamic-'))
+  const previousPath = process.env.PATH
+  const previousDir = process.env.CLAUDE_SESSIONS_DIR
+  const previousAllowed = process.env.TMUX_MCP_ALLOWED_SESSIONS
+  const previousIds = process.env.TMUX_MCP_ALLOWED_CLAUDE_SESSIONS
+  try {
+    await writeFile(join(dir, 'tmux'), `#!/bin/sh
+case "$1" in
+  list-panes) printf 'meta3\\t%%205\\tclaude\\t0\\tmain\\n' ;;
+  load-buffer) cat > '${dir}/message' ;;
+esac
+`, { mode: 0o755 })
+    process.env.PATH = `${dir}:${previousPath}`
+    process.env.CLAUDE_SESSIONS_DIR = dir
+    delete process.env.TMUX_MCP_ALLOWED_SESSIONS
+    delete process.env.TMUX_MCP_ALLOWED_CLAUDE_SESSIONS
+    await mkdir(join(dir, PROJECT))
+    await writeFile(join(dir, PROJECT, `${ID}.jsonl`), JSON.stringify({ type: 'user', message: { content: 'Hi' } }) + '\n')
+    assert.deepEqual((await listLivePanes('meta3')).map((pane) => pane.pane_id), ['%205'])
+    assert.deepEqual((await readLiveConversation(PROJECT, ID)).messages.map((m) => m.text), ['Hi'])
+    assert.deepEqual(await sendToLivePane('meta3', '%205', 'Hello'), { sent: true, pane_id: '%205' })
+  } finally {
+    process.env.PATH = previousPath
+    if (previousDir === undefined) delete process.env.CLAUDE_SESSIONS_DIR
+    else process.env.CLAUDE_SESSIONS_DIR = previousDir
+    if (previousAllowed === undefined) delete process.env.TMUX_MCP_ALLOWED_SESSIONS
+    else process.env.TMUX_MCP_ALLOWED_SESSIONS = previousAllowed
+    if (previousIds === undefined) delete process.env.TMUX_MCP_ALLOWED_CLAUDE_SESSIONS
+    else process.env.TMUX_MCP_ALLOWED_CLAUDE_SESSIONS = previousIds
+    await rm(dir, { recursive: true, force: true })
+  }
+})
