@@ -26,9 +26,13 @@ dropin="$dropin_dir/90-live-bridge.conf"
 backup="${profile}.before-live-bridge.$(date -u +%Y%m%dT%H%M%SZ)"
 server="$repo_root/packages/mcp/dist/index.js"
 changed=0
+runtime_tmp=
 
 rollback() {
   status=$?
+  if [[ -n $runtime_tmp ]]; then
+    rm -rf "$runtime_tmp"
+  fi
   if (( status != 0 && changed )); then
     set +e
     echo 'Installation failed; restoring the previous MCP command.' >&2
@@ -40,7 +44,7 @@ rollback() {
 }
 trap rollback EXIT
 
-for command in node corepack tmux python3 systemctl curl; do
+for command in node corepack tmux python3 systemctl curl tar sha256sum awk uname readlink; do
   command -v "$command" >/dev/null || { echo "Missing command: $command" >&2; exit 1; }
 done
 [[ -f $profile ]] || { echo 'Tunnel profile was not found' >&2; exit 1; }
@@ -53,6 +57,37 @@ systemctl --user cat "$unit_name" >/dev/null
 tmux list-panes -s -t "$tmux_session" -F '#{pane_current_command} #{pane_dead}' |
   grep -qx 'claude 0' || { echo 'No live Claude pane in the selected tmux session' >&2; exit 1; }
 
+# The locked MCP dependencies require at least Node 22.22.2 or 24.15.0.
+# Keep a verified runtime under this user's home if the system Node is older.
+node_bin=$(readlink -f "$(command -v node)")
+if ! "$node_bin" -e 'const [major,minor,patch]=process.versions.node.split(".").map(Number); process.exit((major===22&&(minor>22||(minor===22&&patch>=2)))||(major===24&&minor>=15)||major>=26 ? 0 : 1)'; then
+  [[ $(uname -s) == Linux ]] || { echo 'Automatic Node installation requires Linux' >&2; exit 1; }
+  case $(uname -m) in
+    x86_64) node_arch=x64 ;;
+    aarch64) node_arch=arm64 ;;
+    *) echo 'Unsupported Node architecture' >&2; exit 1 ;;
+  esac
+  node_release=v24.15.0
+  node_directory="node-$node_release-linux-$node_arch"
+  runtime_root="$HOME/.local/share/claude-sessions-live"
+  runtime_dir="$runtime_root/$node_directory"
+  node_bin="$runtime_dir/bin/node"
+  if [[ ! -x $node_bin ]]; then
+    echo "Installing Node $node_release for the live bridge in $runtime_dir..."
+    mkdir -p "$runtime_root"
+    runtime_tmp=$(mktemp -d "$runtime_root/.download.XXXXXX")
+    archive="$node_directory.tar.xz"
+    url="https://nodejs.org/dist/$node_release"
+    curl --fail --location --silent --show-error "$url/$archive" -o "$runtime_tmp/$archive"
+    curl --fail --location --silent --show-error "$url/SHASUMS256.txt" -o "$runtime_tmp/SHASUMS256.txt"
+    (cd "$runtime_tmp" && awk -v archive="$archive" '$2 == archive {print; found=1} END {if (!found) exit 1}' SHASUMS256.txt | sha256sum --check --status)
+    tar -xJf "$runtime_tmp/$archive" -C "$runtime_tmp"
+    mv "$runtime_tmp/$node_directory" "$runtime_dir"
+  fi
+  [[ $("$node_bin" --version) == "$node_release" ]] || { echo 'Cached Node runtime has an unexpected version' >&2; exit 1; }
+fi
+export PATH="$(dirname "$node_bin"):$PATH"
+
 echo 'Building and testing the fork before changing the tunnel...'
 cd "$repo_root"
 corepack pnpm --filter 'claude-sessions-mcp...' install --frozen-lockfile
@@ -63,7 +98,7 @@ corepack pnpm --filter claude-sessions-mcp typecheck
 [[ -f $server ]] || { echo 'MCP server build is missing' >&2; exit 1; }
 
 cp -p "$profile" "$backup"
-export LIVE_BRIDGE_PROFILE="$profile" LIVE_BRIDGE_SERVER="$server"
+export LIVE_BRIDGE_PROFILE="$profile" LIVE_BRIDGE_SERVER="$server" LIVE_BRIDGE_NODE="$node_bin"
 python3 - <<'PY'
 import json
 import os
@@ -74,7 +109,7 @@ text = profile.read_text()
 old = 'command: "npx -y claude-sessions-mcp"'
 if text.count(old) != 1:
     raise SystemExit('Expected exactly one original MCP command; profile left unchanged')
-new = 'command: ' + json.dumps('node ' + os.environ['LIVE_BRIDGE_SERVER'])
+new = 'command: ' + json.dumps(os.environ['LIVE_BRIDGE_NODE'] + ' ' + os.environ['LIVE_BRIDGE_SERVER'])
 temporary = profile.with_suffix(profile.suffix + '.tmp')
 temporary.write_text(text.replace(old, new))
 temporary.chmod(profile.stat().st_mode & 0o777)
