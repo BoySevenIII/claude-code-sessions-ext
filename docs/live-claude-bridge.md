@@ -47,6 +47,11 @@ The installer builds and tests the fork before changing the running
 if the tunnel fails its readiness check. Use the **current** Claude Session ID
 shown by `/status` in the target interactive session:
 
+If the host has Node 20, the installer downloads Node 24.15.0 into
+`~/.local/share/claude-sessions-live`, verifies the official SHA-256 checksum,
+and uses that executable for the build and the MCP service. System Node is
+unchanged. The host needs access to `nodejs.org` for the first download.
+
 ```bash
 git clone https://github.com/BoySevenIII/claude-code-sessions-ext.git ~/claude-code-sessions-ext
 cd ~/claude-code-sessions-ext
@@ -68,7 +73,7 @@ It changes only the stdio MCP command in the existing `CloudB-DEV-root` profile:
 mcp:
   commands:
     - channel: main
-      command: "node /home/claude_user/claude-code-sessions-ext/packages/mcp/dist/index.js"
+      command: "/home/claude_user/.local/share/claude-sessions-live/node-v24.15.0-linux-x64/bin/node /home/claude_user/claude-code-sessions-ext/packages/mcp/dist/index.js"
 ```
 
 The script restarts the existing service and verifies `/readyz`. In the
