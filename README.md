@@ -149,3 +149,19 @@ Remove empty sessions, orphan agents, and orphan todos with preview before execu
 ## License
 
 MIT
+
+## Live bridge development
+
+This fork is developing an MCP bridge for conversations with an existing
+interactive Claude Code session. In the
+[`feat/live-claude-tmux` branch](https://github.com/BoySevenIII/claude-code-sessions-ext/tree/feat/live-claude-tmux),
+an MCP client finds a session by its current UUID, sends a message through
+Claude Code's terminal, and reads its response from the session transcript.
+The caller does not need the operator's tmux pane or a Claude channels
+startup flag. The send-and-read path was verified with a live session on
+2026-09-25.
+
+The implementation and installation instructions are in the
+[UUID routing guide](https://github.com/BoySevenIII/claude-code-sessions-ext/blob/feat/live-claude-tmux/docs/session-id-routing.md);
+development is tracked in [draft PR #1](https://github.com/BoySevenIII/claude-code-sessions-ext/pull/1).
+The default branch and published npm package do not contain this bridge yet.
