@@ -2,13 +2,13 @@
 # Replace the existing Claude Sessions MCP command in CloudB-DEV-root.
 set -euo pipefail
 
-if [[ $# -lt 1 || $# -gt 2 ]]; then
-  echo "Usage: $0 <current-claude-session-uuid> [tmux-session-name]" >&2
+if [[ $# -ne 2 ]]; then
+  echo "Usage: $0 <current-claude-session-uuid> <tmux-session-name>" >&2
   exit 2
 fi
 
 claude_session_id=$1
-tmux_session=${2:-masterplan2-109}
+tmux_session=$2
 if [[ ! $claude_session_id =~ ^[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}$ ]]; then
   echo 'Invalid Claude Session ID' >&2
   exit 2
@@ -119,8 +119,8 @@ changed=1
 mkdir -p "$dropin_dir"
 cat > "$dropin" <<EOF
 [Service]
-Environment=TMUX_MCP_ALLOWED_SESSIONS=$tmux_session
-Environment=TMUX_MCP_ALLOWED_CLAUDE_SESSIONS=$claude_session_id
+Environment=TMUX_MCP_ALLOWED_SESSIONS=
+Environment=TMUX_MCP_ALLOWED_CLAUDE_SESSIONS=
 EOF
 
 systemctl --user daemon-reload
