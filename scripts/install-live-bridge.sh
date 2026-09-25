@@ -55,7 +55,7 @@ tmux list-panes -s -t "$tmux_session" -F '#{pane_current_command} #{pane_dead}' 
 
 echo 'Building and testing the fork before changing the tunnel...'
 cd "$repo_root"
-corepack pnpm install --frozen-lockfile
+corepack pnpm --filter 'claude-sessions-mcp...' install --frozen-lockfile
 corepack pnpm build:core
 corepack pnpm build:mcp
 corepack pnpm test:mcp
