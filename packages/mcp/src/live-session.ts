@@ -15,7 +15,8 @@ const allowed = (name: string): Set<string> =>
   new Set((process.env[name] || '').split(',').map((s) => s.trim()).filter(Boolean))
 
 function checkSession(sessionName: string): void {
-  if (!allowed('TMUX_MCP_ALLOWED_SESSIONS').has(sessionName)) {
+  const sessions = allowed('TMUX_MCP_ALLOWED_SESSIONS')
+  if (sessions.size && !sessions.has(sessionName)) {
     throw new Error('tmux session is not allowlisted')
   }
 }
@@ -124,7 +125,8 @@ function readable(record: Record<string, unknown>): ConversationMessage | undefi
 }
 
 export async function readLiveConversation(projectName: string, sessionId: string, afterOffset = 0, limit = 30) {
-  if (!PROJECT.test(projectName) || !UUID.test(sessionId) || !allowed('TMUX_MCP_ALLOWED_CLAUDE_SESSIONS').has(sessionId)) {
+  const sessions = allowed('TMUX_MCP_ALLOWED_CLAUDE_SESSIONS')
+  if (!PROJECT.test(projectName) || !UUID.test(sessionId) || (sessions.size && !sessions.has(sessionId))) {
     throw new Error('Claude session or project is not allowlisted')
   }
   if (!Number.isSafeInteger(afterOffset) || afterOffset < 0 || !Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
