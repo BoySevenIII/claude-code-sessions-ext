@@ -18,6 +18,10 @@ The extension sends input to a selected tmux pane running Claude and reads conve
 
 The new MCP tools locate the pane, deliver a message, and read subsequent replies with a cursor. See the [English explanation and deployment guide](docs/live-claude-bridge.md) for setup, examples, and access limits.
 
+## Direct session channel
+
+`send_to_claude_session` delivers a message to an already-running Claude Code session by its Session ID, without a tmux pane. It uses Claude Code's channels API; the running session must start with the channel enabled. Read the [channel setup guide](docs/direct-claude-channel.md) for installation and activation. The tmux-based tools remain available for older setups.
+
 ## Packages
 
 | Package                                      | Version                                                                                                                                                                                                                                                                                                  | Description      |
