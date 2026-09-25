@@ -40,32 +40,29 @@ transcript is Claude Code's internal format and may change after an update;
 the parser will then need to be adjusted. Transcript writes can also lag a
 response that is still streaming.
 
-## Installation on the Claude VM
+## Replace the existing MCP on the Claude VM
 
-Build the fork with the repository's `pnpm` workflow:
+The installer builds and tests the fork before changing the running
+`CloudB-DEV-root` profile. It backs up the profile and restores it automatically
+if the tunnel fails its readiness check. Use the **current** Claude Session ID
+shown by `/status` in the target interactive session:
 
 ```bash
 git clone https://github.com/BoySevenIII/claude-code-sessions-ext.git ~/claude-code-sessions-ext
 cd ~/claude-code-sessions-ext
 git switch feat/live-claude-tmux
-corepack pnpm install --frozen-lockfile
-corepack pnpm build:core
-corepack pnpm build:mcp
-corepack pnpm test:mcp
-corepack pnpm --filter claude-sessions-mcp typecheck
+bash scripts/install-live-bridge.sh 6c4cce7f-5ea9-436d-99aa-744a8535df73 masterplan2-109
 ```
 
-Set the allowlists in the existing `openai-tunnel-claude.service` user unit
-(or an environment file already read by that unit). The target process must
-run as the same Unix user as the tunnel client:
+The target process must run as the same Unix user as the tunnel client. The
+installer creates a user-unit drop-in with the two allowlists:
 
 ```ini
 Environment=TMUX_MCP_ALLOWED_SESSIONS=masterplan2-109
 Environment=TMUX_MCP_ALLOWED_CLAUDE_SESSIONS=6c4cce7f-5ea9-436d-99aa-744a8535df73
 ```
 
-In the existing `CloudB-DEV-root` tunnel profile, replace only the stdio MCP
-command with the built fork:
+It changes only the stdio MCP command in the existing `CloudB-DEV-root` profile:
 
 ```yaml
 mcp:
@@ -74,16 +71,8 @@ mcp:
       command: "node /home/claude_user/claude-code-sessions-ext/packages/mcp/dist/index.js"
 ```
 
-Then validate and restart the existing tunnel:
-
-```bash
-tunnel-client doctor --profile CloudB-DEV-root --explain
-systemctl --user daemon-reload
-systemctl --user restart openai-tunnel-claude.service
-systemctl --user status openai-tunnel-claude.service --no-pager
-```
-
-In the existing ChatGPT developer-mode connection, use **Refresh** to discover
+The script restarts the existing service and verifies `/readyz`. In the
+existing ChatGPT developer-mode connection, use **Refresh** to discover
 the three new tools. If the fork fails to start, restore the original
 `npx -y claude-sessions-mcp` command and restart the same service. Keep the
 control-plane key in its existing local environment file; never put it in Git.
