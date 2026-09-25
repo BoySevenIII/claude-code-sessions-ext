@@ -91,9 +91,9 @@ export PATH="$(dirname "$node_bin"):$PATH"
 echo 'Building and testing the fork before changing the tunnel...'
 cd "$repo_root"
 corepack pnpm --filter 'claude-sessions-mcp...' install --frozen-lockfile
-corepack pnpm build:core
-corepack pnpm build:mcp
-corepack pnpm test:mcp
+corepack pnpm --filter @claude-sessions/core build
+corepack pnpm --filter claude-sessions-mcp build
+corepack pnpm --filter claude-sessions-mcp test
 corepack pnpm --filter claude-sessions-mcp typecheck
 [[ -f $server ]] || { echo 'MCP server build is missing' >&2; exit 1; }
 
