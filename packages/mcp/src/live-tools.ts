@@ -1,18 +1,22 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import { listLivePanes, readLiveConversation, sendToLivePane } from './live-session.js'
-import { sendChannelMessage } from './channel-transport.js'
+import { listActiveClaudeSessions, sendToSessionId } from './session-target.js'
 
 const result = (value: unknown) => ({
   content: [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
 })
 
 export function registerLiveTools(server: McpServer): void {
+  server.tool('list_active_claude_sessions',
+    'List running interactive Claude Code sessions with UUID, status, and project; no tmux pane identifier is needed.', {},
+    async () => result(await listActiveClaudeSessions()))
+
   server.tool('send_to_claude_session',
-    'Send a message to an already-running Claude Code session by its UUID, through its Claude channel. The session must have the channel enabled. Returns delivery status, not the reply.', {
-      session_id: z.string().describe('Claude Code session UUID from /status'),
-      message: z.string().describe('Message for the active Claude Code session'),
-    }, async ({ session_id, message }) => result(await sendChannelMessage(session_id, message)))
+    'Send one line to an idle interactive Claude Code session by UUID. The bridge discovers its process and internal tmux pane. Returns delivery status, not Claude response.', {
+      session_id: z.string().describe('Current Claude Code session UUID from claude agents --json'),
+      message: z.string().describe('One-line message for Claude Code'),
+    }, async ({ session_id, message }) => result(await sendToSessionId(session_id, message)))
 
   server.tool('list_live_panes', 'List panes in an explicitly allowed tmux session', {
     session_name: z.string().describe('tmux session name, e.g. masterplan2-109'),
