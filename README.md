@@ -12,15 +12,17 @@ Browse, search, rename, split, and clean up [Claude Code](https://claude.ai/code
 > [!IMPORTANT]
 > **Enable live collaboration with a running Claude Code session.** An external MCP client can send a message into that session and read its new replies while Claude continues working with its existing conversation context.
 
-The extension sends input to a selected tmux pane running Claude and reads conversation messages by Claude Session ID. The pane and transcript are chosen per call; the bridge does not infer their correspondence. Optional allowlists can restrict both selectors. The original session-management tools and the current OpenAI Tunnel remain usable together.
+The preferred path takes only the running Claude session UUID. The bridge discovers its process through `claude agents --json`, finds the terminal used by Claude Code, sends input, and reads replies from the session transcript. The caller does not provide a tmux pane, external tmux session name, or Claude startup flag. Existing session-management tools still work through the same MCP server and OpenAI Tunnel.
 
-## Live Claude Code bridge
+## Talk to a running Claude session
 
-The new MCP tools locate the pane, deliver a message, and read subsequent replies with a cursor. See the [English explanation and deployment guide](docs/live-claude-bridge.md) for setup, examples, and access limits.
+| Tool | What it does |
+| --- | --- |
+| `list_active_claude_sessions` | Find interactive session UUIDs, process IDs, and current status. |
+| `send_to_claude_session` | Deliver one line to an idle session by UUID. Confirms delivery, not completion. |
+| `read_live_conversation` | Read transcript turns by UUID and project, then poll from a byte cursor. |
 
-## Address a live session by UUID
-
-`send_to_claude_session` accepts a Claude Session ID and discovers the running process through `claude agents --json`. It resolves Claude Code's own tmux pane internally, so callers do not need the operator's tmux session name or a Claude startup flag. See the [UUID routing guide](docs/session-id-routing.md) for the workflow and limits.
+Call `list_active_claude_sessions`, select the current UUID, send a message with `send_to_claude_session`, and poll `read_live_conversation` for Claude's reply. The older `list_live_panes` and `send_to_live_session` tools remain available for explicit pane targeting. Read the [UUID routing and deployment guide](docs/session-id-routing.md) for the mechanism, safeguards, installation, and verification.
 
 ## Packages
 
