@@ -21,15 +21,19 @@ const http = createServer(async (req, res) => {
     res.writeHead(404).end()
     return
   }
-  let message = ''
+  const chunks: Buffer[] = []
+  let size = 0
   try {
     for await (const part of req) {
-      message += part.toString('utf8')
-      if (Buffer.byteLength(message, 'utf8') > 16_384) {
+      const chunk = Buffer.isBuffer(part) ? part : Buffer.from(part)
+      size += chunk.length
+      if (size > 16_384) {
         res.writeHead(413).end()
         return
       }
+      chunks.push(chunk)
     }
+    const message = Buffer.concat(chunks).toString('utf8')
     if (!message.trim()) { res.writeHead(400).end(); return }
     await mcp.notification({ method: 'notifications/claude/channel', params: {
       content: message, meta: { source: 'chatgpt' },
