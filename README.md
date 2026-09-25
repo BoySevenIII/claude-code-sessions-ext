@@ -7,6 +7,22 @@ Browse, search, rename, split, and clean up [Claude Code](https://claude.ai/code
 
 > **Note**: This is a community project and is not affiliated with or endorsed by Anthropic.
 
+## Live interactive sessions (opt-in)
+
+The MCP server can also communicate with a **running** Claude Code session:
+
+| Tool | Purpose |
+| --- | --- |
+| `list_active_claude_sessions` | List interactive session UUIDs and their status. |
+| `send_to_claude_session` | Send one line to an idle session by UUID; returns delivery status. |
+| `read_live_conversation` | Read bounded transcript turns and poll new messages with a byte cursor. |
+
+The sender discovers the session with `claude agents --json` and resolves its
+process to Claude Code's tmux pane. The caller supplies a session UUID, not a
+tmux pane or a startup flag. Linux, tmux, and a Claude CLI accessible to the
+MCP server are required for sending. See [the live-session guide](docs/live-session-mcp.md)
+for setup, safety limits, and transcript polling.
+
 ## Packages
 
 | Package                                      | Version                                                                                                                                                                                                                                                                                                  | Description      |
