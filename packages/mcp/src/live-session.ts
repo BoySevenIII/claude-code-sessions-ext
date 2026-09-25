@@ -79,15 +79,24 @@ export async function listLivePanes(sessionName: string): Promise<LivePane[]> {
 }
 
 export async function sendToLivePane(sessionName: string, paneId: string, message: string): Promise<{ sent: true; pane_id: string }> {
-  if (!PANE.test(paneId)) throw new Error('Invalid pane ID')
-  if (!message.trim() || Buffer.byteLength(message, 'utf8') > MAX_MESSAGE || /[\r\n\0\x1b]/.test(message)) {
-    throw new Error('Message must be one line, nonempty, under 16 KiB, without terminal control characters')
-  }
+  validatePaneMessage(paneId, message)
   const pane = (await listLivePanes(sessionName)).find((candidate) => candidate.pane_id === paneId)
   if (!pane || pane.dead) throw new Error('Pane is missing or dead')
   const commands = allowed('TMUX_MCP_CLAUDE_COMMANDS')
   if (!commands.size) commands.add('claude')
   if (!commands.has(pane.command)) throw new Error(`Pane runs ${pane.command}, not an allowed Claude command`)
+  return pasteToPane(paneId, message)
+}
+
+function validatePaneMessage(paneId: string, message: string): void {
+  if (!PANE.test(paneId)) throw new Error('Invalid pane ID')
+  if (!message.trim() || Buffer.byteLength(message, 'utf8') > MAX_MESSAGE || /[\r\n\0\x1b]/.test(message)) {
+    throw new Error('Message must be one line, nonempty, under 16 KiB, without terminal control characters')
+  }
+}
+
+export async function pasteToPane(paneId: string, message: string): Promise<{ sent: true; pane_id: string }> {
+  validatePaneMessage(paneId, message)
   const buffer = `claude_bridge_${randomUUID().replaceAll('-', '')}`
   await tmux(['load-buffer', '-b', buffer, '-'], message)
   try {
