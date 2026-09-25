@@ -15,14 +15,15 @@ the same OpenAI Tunnel. There is no second tunnel or connector to maintain.
 
 | MCP tool | Purpose |
 | --- | --- |
-| `list_live_panes` | Locate a pane in an explicitly allowed tmux session and inspect its running command. |
+| `list_live_panes` | Locate panes in a selected tmux session and inspect their running commands. |
 | `send_to_live_session` | Paste one message into a Claude Code pane and press Enter. The result confirms tmux delivery, not a completed Claude response. |
 | `read_live_conversation` | Read a bounded tail of the Claude transcript by **Claude Session ID**. Subsequent calls use a byte cursor to return only new messages. |
 
-There are two different identifiers. `masterplan2-109` is a **tmux session
-name**: it identifies the terminal that receives input. A UUID such as
+There are two different identifiers. `meta3` is a **tmux session name**: it
+identifies the terminal that receives input. A UUID such as
 `<current-claude-session-id>` is a **Claude Session ID** (a UUID from `/status`): it
-identifies the conversation transcript. They are configured separately.
+identifies the conversation transcript. Select both for each conversation;
+the bridge cannot infer which Claude UUID is running in a tmux pane.
 
 ## Intended workflow
 
@@ -56,15 +57,18 @@ unchanged. The host needs access to `nodejs.org` for the first download.
 git clone https://github.com/BoySevenIII/claude-code-sessions-ext.git ~/claude-code-sessions-ext
 cd ~/claude-code-sessions-ext
 git switch feat/live-claude-tmux
-bash scripts/install-live-bridge.sh '<current-claude-session-id>' masterplan2-109
+bash scripts/install-live-bridge.sh '<current-claude-session-id>' meta3
 ```
 
 The target process must run as the same Unix user as the tunnel client. The
-installer creates a user-unit drop-in with the two allowlists:
+installer checks the chosen pane and transcript before installing. The
+installed user-unit drop-in leaves both optional allowlists empty, allowing
+subsequent calls to select another Claude session without restarting the
+tunnel:
 
 ```ini
-Environment=TMUX_MCP_ALLOWED_SESSIONS=masterplan2-109
-Environment=TMUX_MCP_ALLOWED_CLAUDE_SESSIONS=<current-claude-session-id>
+Environment=TMUX_MCP_ALLOWED_SESSIONS=
+Environment=TMUX_MCP_ALLOWED_CLAUDE_SESSIONS=
 ```
 
 It changes only the stdio MCP command in the existing `CloudB-DEV-root` profile:
@@ -84,8 +88,10 @@ control-plane key in its existing local environment file; never put it in Git.
 
 ## Access boundaries
 
-Both the tmux session and Claude Session ID require explicit environment
-allowlists. Sending rejects dead panes, shells, unrecognized pane IDs, terminal
+An optional comma-separated `TMUX_MCP_ALLOWED_SESSIONS` or
+`TMUX_MCP_ALLOWED_CLAUDE_SESSIONS` can restrict which targets may be selected.
+The default installed configuration permits selection of any session owned by
+the tunnel's Unix user. Sending rejects dead panes, shells, unrecognized pane IDs, terminal
 escape characters, multiline input, and messages over 16 KiB. The tmux process
 name defaults to `claude`; set `TMUX_MCP_CLAUDE_COMMANDS` only if the
 actual Claude process uses another name. Never allowlist a shell such as
@@ -94,8 +100,14 @@ actual Claude process uses another name. Never allowlist a shell such as
 The transcript tool accepts a project folder name and Session ID, never an
 arbitrary filesystem path. Its first read scans at most the last 2 MB and
 returns at most 50 messages; later reads begin at the supplied byte cursor.
-When Claude switches conversations or `/clear` creates a new ID, update the
-Claude Session ID allowlist.
+When Claude switches conversations or `/clear` creates a new ID, pass the new
+UUID to the transcript tool. No service restart is required.
+
+If an earlier installation pinned one tmux name and UUID, run
+`bash scripts/enable-dynamic-live-bridge.sh` after pulling the updated branch.
+This command builds and tests the server, backs up the old systemd drop-in,
+updates the environment, restarts the tunnel, and restores the previous
+drop-in if readiness fails.
 
 On Node 24, the focused tests can also run without installing the workspace:
 `node --experimental-strip-types --test packages/mcp/src/live-session.test.mjs`.
