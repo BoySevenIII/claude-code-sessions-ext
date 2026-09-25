@@ -12,7 +12,7 @@ Browse, search, rename, split, and clean up [Claude Code](https://claude.ai/code
 > [!IMPORTANT]
 > **Enable live collaboration with a running Claude Code session.** An external MCP client can send a message into that session and read its new replies while Claude continues working with its existing conversation context.
 
-The extension sends input to an explicitly allowed tmux pane and reads conversation messages from the corresponding Claude transcript using its Session ID. It adds these opt-in capabilities to the existing `claude-sessions-mcp` server, so the original session-management tools and the current OpenAI Tunnel remain usable together.
+The extension sends input to a selected tmux pane running Claude and reads conversation messages by Claude Session ID. The pane and transcript are chosen per call; the bridge does not infer their correspondence. Optional allowlists can restrict both selectors. The original session-management tools and the current OpenAI Tunnel remain usable together.
 
 ## Live Claude Code bridge
 
